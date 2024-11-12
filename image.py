@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from tkinterdnd2 import TkinterDnD, DND_FILES
 from PIL import Image, ImageTk
-import os
+import os,sys
 from menu import EncryptionMenu
 import functions
 
@@ -23,7 +23,11 @@ class ImageSteganographyApp(TkinterDnD.Tk):
         self.preview_image = None
         self.original_format = None
         self.crypto_utils = functions.CryptoUtils()  # Initialize CryptoUtils
-        
+
+        if len(sys.argv) > 1:
+            self.encryption_method = sys.argv[1]
+            print(f"Selected encryption method in image.py: {sys.argv[1]}")
+                
         self.create_widgets()
 
     def create_widgets(self):
@@ -94,7 +98,24 @@ class ImageSteganographyApp(TkinterDnD.Tk):
         right_frame = ctk.CTkFrame(self.container, fg_color=("#475D82", "#34495E"))
         right_frame.pack(side="right", padx=15, pady=15, fill="both", expand=True)
 
+
+        self.method_label = ctk.CTkLabel(
+        right_frame,
+        text="Encryption Method: None",  # Default text
+        font=("Arial Bold", 14),
+        text_color=("#FFFFFF", "#FFFFFF")
+        )
+        self.method_label.pack(pady=10)
         # Text entry section
+        self.method_var = ctk.StringVar(value=self.encryption_method)
+        self.method_dropdown = ctk.CTkOptionMenu(
+            self,
+            values=["Steganography", "PyCryptodome", "PyNaCl", "PyAesCrypt"],
+            variable=self.method_var,
+            command=self.on_method_change
+        )
+        self.method_dropdown.pack(pady=10)
+
         entry_label = ctk.CTkLabel(
             right_frame,
             text="Enter Message",
@@ -199,6 +220,16 @@ class ImageSteganographyApp(TkinterDnD.Tk):
         if self.image_path:
             self.update_preview_image()
 
+    def set_encryption_method(self, method):
+        self.encryption_method = EncryptionMenu.show_menu(self)  # Store the selected method
+        self.method_label.configure(text=f"Encryption Method: {method}")
+
+    def on_method_change(self, selected_method):
+        # Update the encryption method label when the method changes
+        self.encryption_method = selected_method
+        self.method_label.config(text=f"Selected Method: {self.encryption_method}")
+        print(f"Encryption method changed to: {self.encryption_method}")
+
     def update_preview_image(self):
         try:
             # Open and get image information
@@ -220,7 +251,7 @@ class ImageSteganographyApp(TkinterDnD.Tk):
                 # Create preview image
                 preview_img = img.copy()
                 preview_img.thumbnail((preview_width, preview_height), Image.Resampling.LANCZOS)
-                photo = ImageTk.PhotoImage(preview_img)
+                photo = ctk.CTkImage(preview_img, size=(preview_width, preview_height))
                 
                 # Update preview label
                 self.preview_label.configure(image=photo, text="")
@@ -242,18 +273,19 @@ class ImageSteganographyApp(TkinterDnD.Tk):
         if not data:
             messagebox.showwarning("Input Error", "Please enter text to encode.")
             return
+         
+        if not self.encryption_method:
+            messagebox.showwarning("No Method Selected", "Please select an encryption method.")
+            return
+
 
         try:
-            # Get encryption method from menu selection
-            menu = EncryptionMenu()
-            self.encryption_method = menu.show_menu()
+            self.encryption_method = EncryptionMenu.show_menu(self)
             
             if self.encryption_method:
-                # Create temporary output path
                 output_path = os.path.join(os.path.dirname(self.image_path), 
                                          f"temp_encrypted_{os.path.basename(self.image_path)}")
                 
-                # Apply encryption based on selected method
                 if self.encryption_method == "Steganography":
                     self.crypto_utils.hide_file_in_image(self.image_path, data.encode(), output_path)
                 elif self.encryption_method == "PyCryptodome":
@@ -276,7 +308,8 @@ class ImageSteganographyApp(TkinterDnD.Tk):
         if not self.image_path:
             messagebox.showwarning("Image Error", "Please upload an image file first.")
             return
-
+        menu = EncryptionMenu()
+        self.encryption_method = menu.show_menu()
         try:
             # Get encryption method from menu selection
             menu = EncryptionMenu()

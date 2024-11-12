@@ -133,6 +133,7 @@ class EncryptionMenu(ctk.CTk):
             hover_color="#f0f0f0"
         )
         back_button.pack(pady=(30, 0))
+    
 
     def set_encryption_method(self, method):
         self.encryption_method = method
@@ -141,7 +142,7 @@ class EncryptionMenu(ctk.CTk):
         
     def go_to_menu(self):
         self.destroy()
-        subprocess.Popen([sys.executable, "menu.py"])
+        subprocess.Popen([sys.executable, "image.py"])
         sys.exit()
 
     def run(self):
@@ -149,8 +150,11 @@ class EncryptionMenu(ctk.CTk):
 
     def show_menu(self):
         self.mainloop()
+        print("selecrted method",self.encryption_method)
+
         return self.encryption_method
 
 if __name__ == "__main__":
     app = EncryptionMenu()
     app.run()
+

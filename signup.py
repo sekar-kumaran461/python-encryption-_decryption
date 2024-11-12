@@ -17,9 +17,6 @@ class SignupPage:
         self.window.geometry("1200x700")
         self.window.configure(fg_color="#1a1a1a")
         
-        # Initialize sent_otp as a class variable
-        self.sent_otp = None
-        
         self.create_db()
         self.create_widgets()
         
@@ -32,8 +29,7 @@ class SignupPage:
             database="encryption_decryption"  # Replace with your database name
         )
         cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
+        cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(255) NOT NULL UNIQUE,
                 email VARCHAR(255) NOT NULL UNIQUE,
@@ -111,32 +107,6 @@ class SignupPage:
         )
         self.email_entry.pack(pady=10)
 
-        # OTP Frame
-        otp_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
-        otp_frame.pack(pady=5)
-
-        self.otp_entry = ctk.CTkEntry(
-            otp_frame,
-            width=200,
-            height=50,
-            placeholder_text="Enter OTP",
-            font=("Arial", 14),
-            corner_radius=25
-        )
-        self.otp_entry.pack(side="left", padx=5)
-
-        self.otp_button = ctk.CTkButton(
-            otp_frame,
-            text="Send OTP",
-            width=90,
-            height=50,
-            corner_radius=25,
-            command=self.send_otp,
-            fg_color="#2b2b2b",
-            hover_color="#1a1a1a"
-        )
-        self.otp_button.pack(side="left", padx=5)
-
         # Password Entry
         self.password_entry = ctk.CTkEntry(
             form_frame,
@@ -201,53 +171,6 @@ class SignupPage:
             return True
         return False
 
-    def send_otp(self):
-        email = self.email_entry.get()
-        if not email:
-            messagebox.showerror("Error", "Please enter an email!")
-            return
-        
-        if not self.validate_email(email):
-            messagebox.showerror("Error", "Please enter a valid email address!")
-            return
-
-        try:
-            self.sent_otp = random.randint(100000, 999999)
-            # Email sending logic (configure with your email settings)
-            sender_email = "your-email@gmail.com"
-            sender_password = "your-app-specific-password"
-            
-            server = smtplib.SMTP('smtp.gmail.com', 587)
-            server.starttls()
-            server.login(sender_email, sender_password)
-            message = f"Subject: OTP Verification\n\nYour OTP is {self.sent_otp}"
-            server.sendmail(sender_email, email, message)
-            server.quit()
-            
-            messagebox.showinfo("Success", "OTP has been sent to your email!")
-            self.otp_button.configure(text="Verify OTP", command=self.verify_otp)
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to send OTP. Please try again later.")
-
-    def verify_otp(self):
-        entered_otp = self.otp_entry.get()
-        if not entered_otp:
-            messagebox.showerror("Error", "Please enter OTP!")
-            return
-        
-        try:
-            if int(entered_otp) == self.sent_otp:
-                messagebox.showinfo("Success", "Email verified successfully!")
-                self.otp_button.configure(state="disabled", text="Verified")
-                return True
-            else:
-                messagebox.showerror("Error", "Incorrect OTP!")
-                return False
-        except ValueError:
-            messagebox.showerror("Error", "Invalid OTP format!")
-            return False
-
     def sign_up(self):
         username = self.username_entry.get()
         email = self.email_entry.get()
@@ -271,10 +194,6 @@ class SignupPage:
             messagebox.showerror("Error", "Passwords do not match!")
             return
 
-        if not self.verify_otp():
-            messagebox.showerror("Error", "Please verify your email with the correct OTP!")
-            return
-
         # Hash the password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
@@ -282,9 +201,9 @@ class SignupPage:
             # Connect to the MySQL database
             conn = mysql.connector.connect(
                 host="localhost",
-                user="your_username",  # Replace with your MySQL username
-                password="your_password",  # Replace with your MySQL password
-                database="your_database"  # Replace with your database name
+                user="root",  # Replace with your MySQL username
+                password="sk4613123",  # Replace with your MySQL password
+                database="encryption_decryption"  # Replace with your database name
             )
             cursor = conn.cursor()
 
@@ -314,7 +233,6 @@ class SignupPage:
         """Clear all the entry fields."""
         self.username_entry.delete(0, 'end')
         self.email_entry.delete(0, 'end')
-        self.otp_entry.delete(0, 'end')
         self.password_entry.delete(0, 'end')
         self.confirm_password_entry.delete(0, 'end')
 
